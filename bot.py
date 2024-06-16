@@ -21,7 +21,7 @@ dp = Dispatcher()
 ones = OnesManager()
 spreadsheet_manager = SpreadsheetManager(ones)
 manager = Manager(sm=spreadsheet_manager)
-admin_id = 455268076
+admin_id = 314996804
 
 
 @dp.message(Command("start"))

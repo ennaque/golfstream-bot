@@ -10,3 +10,12 @@ build_env:
 	@test ! -f 'docker/${pgsql_env}' && (echo 'Copy file ...'; cp -v docker/${pgsql_env}.dist docker/${pgsql_env}) || echo 'File '${pgsql_env} 'exists.'
 	@test ! -f 'docker/nginx/${nginx_conf}' && (echo 'Copy file ...'; cp -v docker/nginx/${nginx_conf}.dist docker/nginx/${nginx_conf}) || echo 'File '${nginx_conf} 'exists.'
 	@test ! -f 'docker/${env}' && (echo 'Copy file ...'; cp -v docker/${env}.dist docker/${env}) || echo 'Docker file '${env} 'exists.'
+
+up:
+	docker-compose -f ./docker/docker-compose.yml up -d
+
+rebuild:
+	docker-compose -f ./docker/docker-compose.yml rm -vsf ;\
+	docker-compose -f ./docker/docker-compose.yml down -v --remove-orphans ;\
+	docker-compose -f ./docker/docker-compose.yml build ;\
+	docker-compose -f ./docker/docker-compose.yml up -d

@@ -14,7 +14,7 @@ from pathlib import Path
 
 token = dotenv_values(Path(__file__).resolve().parent.joinpath('docker') / '.env')['TOKEN']
 bot = Bot(token=token)
-admin_id = 455268076
+admin_id = 314996804
 
 
 class Manager:
@@ -94,6 +94,16 @@ class Manager:
                     if task.closed:
                         continue
                     if task.sent_to is not None and task.sent_to.telegram_id == user.telegram_id:
+                        continue
+                    if task.address == "" and (task.sent_to is None or task.sent_to.telegram_id != admin_id):
+                        link = self.sm.get_row_link(task)
+                        admin_user = User.get(telegram_id=admin_id)
+                        await bot.send_message(admin_id, f"Не найден адрес по заявке [№{task.inner_id}]({link})",
+                                               parse_mode="Markdown",
+                                               link_preview_options=LinkPreviewOptions(is_disabled=True)
+                                               )
+                        task.sent_to = admin_user
+                        task.save()
                         continue
                     await bot.send_message(user.telegram_id,
                                            f"*Невыполненная заявка*\n{self.get_task_to_string(user, task)}",

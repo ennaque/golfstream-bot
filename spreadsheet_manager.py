@@ -6,7 +6,7 @@ from pygsheets import Spreadsheet
 from db import Tab, Task, User
 from datetime import datetime
 from pytz import timezone
-from ones_manager import OnesManager
+from ones_manager import OnesManager, OnesException
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
@@ -80,7 +80,7 @@ class SpreadsheetManager:
                         or task_value[6] != '' or task_value[7] != '' or task_value[8] != ''):
                     task: Task = None
                     created: bool = False
-                    closed: bool = task_value[6] == ''
+                    closed: bool = task_value[6] != ''
                     update_datetime = False
                     update_address = False
                     if task_value[1] == '':
@@ -88,9 +88,14 @@ class SpreadsheetManager:
                         datetime_to_write = datetime.now().astimezone(timezone('Europe/Moscow')).strftime("%Y-%m-%d %H:%M")
                     else:
                         datetime_to_write = task_value[1]
+
+                    address_to_write = ''
                     if task_value[4] == '':
                         update_address = True
-                        address_to_write = self.ones.get_addresses_by_station_number(task_value[2])
+                        try:
+                            address_to_write = self.ones.get_addresses_by_station_number(task_value[2])
+                        except OnesException as e:
+                            pass
                     else:
                         address_to_write = task_value[4]
                     try:
