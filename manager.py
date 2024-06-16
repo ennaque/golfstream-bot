@@ -3,8 +3,10 @@ from typing import List
 
 from aiogram.types import LinkPreviewOptions
 from peewee import DoesNotExist
+
 from db import User, Task
 from layout import answer_layout
+from ones_manager import OnesException
 from spreadsheet_manager import SpreadsheetManager
 from aiogram import Bot
 from dotenv import dotenv_values
@@ -12,6 +14,7 @@ from pathlib import Path
 
 token = dotenv_values(Path(__file__).resolve().parent.joinpath('docker') / '.env')['TOKEN']
 bot = Bot(token=token)
+admin_id = 455268076
 
 
 class Manager:
@@ -80,6 +83,9 @@ class Manager:
         while True:
             try:
                 tasks = self.sm.sync_tabs()
+            except OnesException as e:
+                await bot.send_message(admin_id, str(e))
+                return
             except Exception:
                 return
             for task in tasks:

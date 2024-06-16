@@ -10,6 +10,7 @@ from pathlib import Path
 
 from layout import closed_layout, answer_abort_layout, answer_layout, layout_menu, admin_layout_menu, note_abort_layout
 from manager import Manager
+from ones_manager import OnesManager
 from spreadsheet_manager import SpreadsheetManager
 from states import RegisterState, TaskState
 
@@ -17,7 +18,8 @@ logging.basicConfig(level=logging.INFO)
 token = dotenv_values(Path(__file__).resolve().parent.joinpath('docker') / '.env')['TOKEN']
 bot = Bot(token=token)
 dp = Dispatcher()
-spreadsheet_manager = SpreadsheetManager()
+ones = OnesManager()
+spreadsheet_manager = SpreadsheetManager(ones)
 manager = Manager(sm=spreadsheet_manager)
 admin_id = 455268076
 
