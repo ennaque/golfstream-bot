@@ -101,6 +101,8 @@ class SpreadsheetManager:
                         update_chop = True
                         try:
                             chop_to_write = self.ones.get_chop_by_station_number(task_value[2])
+                            if chop_to_write is None:
+                                chop_to_write = ''
                         except OnesException:
                             pass
                     else:
