@@ -36,6 +36,15 @@ async def cmd_start(message: Message, state: FSMContext) -> None:
             await message.answer("Меню", reply_markup=admin_layout_menu)
 
 
+@dp.message(Command("users"))
+async def cmd_start(message: Message, state: FSMContext) -> None:
+    users = manager.get_all_users()
+    val = ''
+    for user in users:
+        val = f"{val}\n[{user.name}](tg://user?id={user.telegram_id})"
+    await message.answer(f"*Список зарегестрированных пользователей*:\n{val}", parse_mode="Markdown")
+
+
 @dp.message(RegisterState.surname)
 async def cmd_state(message: Message):
     if manager.create_user(message.from_user.id, message.text.strip()) is None:

@@ -37,6 +37,9 @@ class Manager:
         task.result = new_answer
         task.save()
 
+    def get_all_users(self) -> List[User]:
+        return [user for user in User.select()]
+
     def get_current_user(self, telegram_id: int) -> User:
         try:
             return User.get(User.telegram_id == telegram_id)
@@ -113,4 +116,4 @@ class Manager:
                     task.save()
                 except DoesNotExist as e:
                     continue
-            await asyncio.sleep(10)
+            await asyncio.sleep(60)
