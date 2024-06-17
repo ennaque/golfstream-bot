@@ -43,6 +43,13 @@ class SpreadsheetManager:
         row = int(task.inner_id) + 5
         wsh.update_value(f"E{row}", text)
 
+    def update_chop(self, task: Task, text: str):
+        tab = task.tab
+        sh = self.__get_spreadsheet()
+        wsh = sh.worksheet_by_title(tab.name)
+        row = int(task.inner_id) + 5
+        wsh.update_value(f"D{row}", text)
+
     def update_field(self, task: Task, user: User, field: str, text: str, old_text: str) -> str:
         tab = task.tab
         sh = self.__get_spreadsheet()
@@ -83,12 +90,21 @@ class SpreadsheetManager:
                     closed: bool = task_value[6] != ''
                     update_datetime = False
                     update_address = False
+                    update_chop = False
                     if task_value[1] == '':
                         update_datetime = True
                         datetime_to_write = datetime.now().astimezone(timezone('Europe/Moscow')).strftime("%Y-%m-%d %H:%M")
                     else:
                         datetime_to_write = task_value[1]
-
+                    chop_to_write = ''
+                    if task_value[3] == '':
+                        update_chop = True
+                        try:
+                            chop_to_write = self.ones.get_chop_by_station_number(task_value[2])
+                        except OnesException:
+                            pass
+                    else:
+                        chop_to_write = task_value[3]
                     address_to_write = ''
                     if task_value[4] == '':
                         update_address = True
@@ -108,7 +124,7 @@ class SpreadsheetManager:
                             inner_id=task_value[0],
                             datetime=datetime_to_write,
                             station=task_value[2],
-                            chop=task_value[3],
+                            chop=chop_to_write,
                             address=address_to_write,
                             type=task_value[5],
                             result=task_value[6],
@@ -119,7 +135,7 @@ class SpreadsheetManager:
                     else:
                         task.datetime = datetime_to_write
                         task.station = task_value[2]
-                        task.chop = task_value[3]
+                        task.chop = chop_to_write
                         task.address = address_to_write
                         task.type = task_value[5]
                         task.result = task_value[6]
@@ -130,6 +146,8 @@ class SpreadsheetManager:
                         self.update_datetime(task, datetime_to_write)
                     if update_address:
                         self.update_address(task, address_to_write)
+                    if update_chop:
+                        self.update_chop(task, chop_to_write)
                     if self.__need_to_notify(task, created):
                         to_notify.append(task)
         return to_notify
