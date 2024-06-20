@@ -109,12 +109,16 @@ class Manager:
                     task.save()
                     continue
                 logging.info("sending task " + task.inner_id + " for user " + user.name)
-                await bot.send_message(user.telegram_id,
-                                       f"*Невыполненная заявка*\n{self.get_task_to_string(user, task)}",
-                                       reply_markup=answer_layout(task.id), parse_mode="Markdown",
-                                       link_preview_options=LinkPreviewOptions(is_disabled=True))
-                task.sent_to = user
-                task.save()
+                try:
+                    await bot.send_message(user.telegram_id,
+                                           f"*Невыполненная заявка*\n{self.get_task_to_string(user, task)}",
+                                           reply_markup=answer_layout(task.id), parse_mode="Markdown",
+                                           link_preview_options=LinkPreviewOptions(is_disabled=True))
+                    task.sent_to = user
+                    task.save()
+                except Exception as e:
+                    logging.info("error while sending message to " + user.name)
+                    logging.info(str(e))
             except DoesNotExist as e:
                 logging.info("user " + task.performer + " not found")
                 continue
