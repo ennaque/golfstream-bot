@@ -1,5 +1,5 @@
-import asyncio
 from typing import List
+import logging
 
 from aiogram.types import LinkPreviewOptions
 from peewee import DoesNotExist
@@ -83,37 +83,37 @@ class Manager:
         return task.to_string(user.telegram_id, self.sm.get_row_link(task))
 
     async def notify_pool(self) -> None:
-        while True:
+        logging.info("start manager")
+        try:
+            tasks = self.sm.sync_tabs()
+        except OnesException as e:
+            await bot.send_message(admin_id, str(e))
+            return
+        except Exception:
+            return
+        for task in tasks:
             try:
-                tasks = self.sm.sync_tabs()
-            except OnesException as e:
-                await bot.send_message(admin_id, str(e))
-                return
-            except Exception:
-                return
-            for task in tasks:
-                try:
-                    user = User.get(name=task.performer)
-                    if task.closed:
-                        continue
-                    if task.sent_to is not None and task.sent_to.telegram_id == user.telegram_id:
-                        continue
-                    if task.address == "" and (task.sent_to is None or task.sent_to.telegram_id != admin_id):
-                        link = self.sm.get_row_link(task)
-                        admin_user = User.get(telegram_id=admin_id)
-                        await bot.send_message(admin_id, f"Не найден адрес по заявке [№{task.inner_id}]({link})",
-                                               parse_mode="Markdown",
-                                               link_preview_options=LinkPreviewOptions(is_disabled=True)
-                                               )
-                        task.sent_to = admin_user
-                        task.save()
-                        continue
-                    await bot.send_message(user.telegram_id,
-                                           f"*Невыполненная заявка*\n{self.get_task_to_string(user, task)}",
-                                           reply_markup=answer_layout(task.id), parse_mode="Markdown",
-                                           link_preview_options=LinkPreviewOptions(is_disabled=True))
-                    task.sent_to = user
-                    task.save()
-                except DoesNotExist as e:
+                user = User.get(name=task.performer)
+                if task.closed:
                     continue
-            await asyncio.sleep(60)
+                if task.sent_to is not None and task.sent_to.telegram_id == user.telegram_id:
+                    continue
+                if task.address == "" and (task.sent_to is None or task.sent_to.telegram_id != admin_id):
+                    link = self.sm.get_row_link(task)
+                    admin_user = User.get(telegram_id=admin_id)
+                    await bot.send_message(admin_id, f"Не найден адрес по заявке [№{task.inner_id}]({link})",
+                                           parse_mode="Markdown",
+                                           link_preview_options=LinkPreviewOptions(is_disabled=True)
+                                           )
+                    task.sent_to = admin_user
+                    task.save()
+                    continue
+                await bot.send_message(user.telegram_id,
+                                       f"*Невыполненная заявка*\n{self.get_task_to_string(user, task)}",
+                                       reply_markup=answer_layout(task.id), parse_mode="Markdown",
+                                       link_preview_options=LinkPreviewOptions(is_disabled=True))
+                task.sent_to = user
+                task.save()
+            except DoesNotExist as e:
+                continue
+        logging.info("end manager")

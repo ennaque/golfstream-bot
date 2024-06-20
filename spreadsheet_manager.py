@@ -7,6 +7,7 @@ from db import Tab, Task, User
 from datetime import datetime
 from pytz import timezone
 from ones_manager import OnesManager, OnesException
+import logging
 
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets', 'https://www.googleapis.com/auth/drive']
 
@@ -68,17 +69,61 @@ class SpreadsheetManager:
         tabs = sh.worksheets()
         tabModels = []
         for tab in tabs:
-            try:
-                tabModel, created = Tab.get_or_create(name=tab.title)
-                tabModels.append(tabModel)
-            except:
-                continue
+            if self.__need_to_sync(tab.title):
+                try:
+                    tab_model, created = Tab.get_or_create(name=tab.title)
+                    tabModels.append(tab_model)
+                except:
+                    continue
         notify = self.__sync_data(tabModels, sh)
         return notify
+
+    def __need_to_sync(self, month: str) -> bool:
+        year = int(''.join(filter(str.isdigit, month)))
+        month = self.__get_month(''.join([i for i in month if i.isalpha()]).lower())
+        now_year = datetime.now().year
+        now_month = datetime.now().month
+        if now_month == 1 or now_month == 2:
+            if month == 12 or month == 1 or month == 2:
+                if year == now_year or year == (now_year - 1):
+                    return True
+        if year < now_year:
+            return False
+        if month >= (now_month - 1):
+            return True
+        return False
+
+    def __get_month(self, month: str) -> int:
+        match month:
+            case 'январь':
+                return 1
+            case 'февраль':
+                return 2
+            case 'март':
+                return 3
+            case 'апрель':
+                return 4
+            case 'май':
+                return 5
+            case 'июнь':
+                return 6
+            case 'июль':
+                return 7
+            case 'август':
+                return 8
+            case 'сентябрь':
+                return 9
+            case 'октябрь':
+                return 10
+            case 'ноябрь':
+                return 11
+            case 'декабрь':
+                return 12
 
     def __sync_data(self, tabs: List[Tab], sh: Spreadsheet) -> List[Task]:
         to_notify = []
         for tab in tabs:
+            logging.info("sync tab " + tab.name)
             data = sh.worksheet_by_title(tab.name).get_values('A6', 'I999')
             for i in range(len(data)):
                 task_value = data[i]

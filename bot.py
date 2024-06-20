@@ -14,7 +14,8 @@ from ones_manager import OnesManager
 from spreadsheet_manager import SpreadsheetManager
 from states import RegisterState, TaskState
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(level=logging.INFO, filename='prod_log.log', filemode='w',
+                    format="%(asctime)s %(levelname)s %(message)s")
 token = dotenv_values(Path(__file__).resolve().parent.joinpath('docker') / '.env')['TOKEN']
 bot = Bot(token=token)
 dp = Dispatcher()
@@ -167,8 +168,21 @@ async def main():
     await dp.start_polling(bot)
 
 
-if __name__ == "__main__":
-    t = threading.Thread(target=asyncio.run, args=(manager.notify_pool(),))
-    t.start()
+async def pool() -> None:
+    while True:
+        logging.info("start sync")
+        t = threading.Thread(target=asyncio.run, args=(manager.notify_pool(),))
+        t.start()
+        await asyncio.sleep(40)
+        while True:
+            if t.is_alive():
+                logging.info("wait 10 sec more")
+                await asyncio.sleep(10)
+            else:
+                break
+        logging.info("end sync")
 
+if __name__ == "__main__":
+    tr = threading.Thread(target=asyncio.run, args=(pool(),))
+    tr.start()
     asyncio.run(main())
