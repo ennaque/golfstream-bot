@@ -127,7 +127,7 @@ class OnesManager:
             postfix_ref = self.lyn_ref
         if postfix == 'пр':
             postfix_ref = self.pioner_ref
-        if postfix == 'си':
+        if postfix == 'н':
             postfix_ref = self.si_ref
         path = self.host + (f"InformationRegister_%D0%94%D0%B8%D1%81%D0%BB%D0%BE%D0%BA%D0%B0%D1%86%D0%B8%D1%8F_RecordType/"
                        f"SliceLast?$format=json&Condition=%D0%9F%D1%83%D0%BB%D1%8C%D1%82%D0%BE%D0%B2%D0%BE%D0%B9%D"
