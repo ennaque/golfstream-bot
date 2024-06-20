@@ -108,6 +108,7 @@ class Manager:
                     task.sent_to = admin_user
                     task.save()
                     continue
+                logging.info("sending task " + task.inner_id + " for user " + user.name)
                 await bot.send_message(user.telegram_id,
                                        f"*Невыполненная заявка*\n{self.get_task_to_string(user, task)}",
                                        reply_markup=answer_layout(task.id), parse_mode="Markdown",
