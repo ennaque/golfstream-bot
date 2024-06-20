@@ -189,6 +189,7 @@ class SpreadsheetManager:
                         task.performer = task_value[7]
                         task.note = task_value[8]
                         task.closed = closed
+                        task.save()
                     if update_datetime:
                         self.update_datetime(task, datetime_to_write)
                     if update_address:

@@ -116,5 +116,6 @@ class Manager:
                 task.sent_to = user
                 task.save()
             except DoesNotExist as e:
+                logging.info("user " + task.performer + " not found")
                 continue
         logging.info("end manager")
