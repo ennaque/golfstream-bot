@@ -203,9 +203,7 @@ class SpreadsheetManager:
     def __need_to_notify(self, task: Task, created: bool) -> bool:
         if task.closed:
             return False
-        if created is True:
-            return task.performer != ''
-        return True
+        return task.performer != ''
 
     def __get_spreadsheet(self) -> Spreadsheet:
         gc = pygsheets.authorize(

@@ -171,7 +171,8 @@ async def main():
 async def pool() -> None:
     while True:
         logging.info("start sync")
-        t = threading.Thread(target=asyncio.run, args=(manager.notify_pool(),))
+        m = Manager(sm=SpreadsheetManager(OnesManager()))
+        t = threading.Thread(target=asyncio.run, args=(m.notify_pool(),))
         t.start()
         await asyncio.sleep(40)
         while True:

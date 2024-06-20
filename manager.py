@@ -13,7 +13,7 @@ from dotenv import dotenv_values
 from pathlib import Path
 
 token = dotenv_values(Path(__file__).resolve().parent.joinpath('docker') / '.env')['TOKEN']
-bot = Bot(token=token)
+# bot = Bot(token=token)
 admin_id = 314996804
 
 
@@ -40,13 +40,13 @@ class Manager:
     def get_all_users(self) -> List[User]:
         return [user for user in User.select()]
 
-    def get_current_user(self, telegram_id: int) -> User:
+    def get_current_user(self, telegram_id: int) -> User | None:
         try:
             return User.get(User.telegram_id == telegram_id)
         except DoesNotExist:
             return None
 
-    def create_user(self, telegram_id: int, name: str) -> User:
+    def create_user(self, telegram_id: int, name: str) -> User | None:
         user = User(telegram_id=telegram_id, name=name)
         try:
             user.save()
@@ -84,6 +84,7 @@ class Manager:
 
     async def notify_pool(self) -> None:
         logging.info("start manager")
+        bot = Bot(token=token)
         try:
             tasks = self.sm.sync_tabs()
         except OnesException as e:
@@ -91,9 +92,13 @@ class Manager:
             return
         except Exception:
             return
+        logging.info("try to send " + str(len(tasks)) + " tasks")
         for task in tasks:
             try:
-                user = User.get(name=task.performer)
+                user = User.get_or_none(name=task.performer)
+                if user is None:
+                    logging.info("user " + task.performer + " not found")
+                    continue
                 if task.closed:
                     continue
                 if task.sent_to is not None and task.sent_to.telegram_id == user.telegram_id:
@@ -110,16 +115,22 @@ class Manager:
                     continue
                 logging.info("sending task " + task.inner_id + " for user " + user.name)
                 try:
-                    await bot.send_message(user.telegram_id,
-                                           f"*Невыполненная заявка*\n{self.get_task_to_string(user, task)}",
-                                           reply_markup=answer_layout(task.id), parse_mode="Markdown",
-                                           link_preview_options=LinkPreviewOptions(is_disabled=True))
+                    await send(user, self.get_task_to_string(user, task), task.id, bot)
                     task.sent_to = user
                     task.save()
                 except Exception as e:
-                    logging.info("error while sending message to " + user.name)
+                    logging.info("error while sending task " + task.inner_id + " to " + user.name)
                     logging.info(str(e))
+                    continue
             except DoesNotExist as e:
                 logging.info("user " + task.performer + " not found")
                 continue
+        await bot.session.close()
         logging.info("end manager")
+
+
+async def send(user: User, task: str, task_id: int, bot: Bot) -> None:
+    await bot.send_message(user.telegram_id,
+                           f"*Невыполненная заявка*\n{task}",
+                           reply_markup=answer_layout(task_id), parse_mode="Markdown",
+                           link_preview_options=LinkPreviewOptions(is_disabled=True))
